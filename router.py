@@ -174,3 +174,60 @@ if __name__ == "__main__":
     app.router.add_get("/client.js", javascript)
     app.router.add_post("/offer", offer)
     web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
+
+
+# from onvif import ONVIFCamera
+# import cv2
+# import aiortc
+
+# IP='192.168.0.103'   # Camera IP address
+# PORT=8080           # Port
+# USER=''         # Username
+# PASS=''        # Password
+
+# def create_frame(IP, PORT, USER , PASS):
+#     camera = ONVIFCamera(IP, PORT, USER , PASS)
+
+#     media_service = camera.create_media_service()
+
+#     profiles = media_service.GetProfiles()
+
+#     profile = profiles[0]
+
+#     stream_uri = media_service.GetStreamUri({
+#         'StreamSetup':{
+#             'Stream':'RTP-Unicast',
+#             'Transport': {
+#                 'Protocol': 'RTSP',
+#                 'Tunnel': None
+#             }
+#         },
+#         'ProfileToken': profile.token
+#     })
+
+#     print(stream_uri)
+
+
+#     # Set up the OpenCV video capture object
+#     # cap = cv2.VideoCapture(stream_uri.Uri)
+#     if len(USER)>0 and len(PASS)>0:
+#         uri = stream_uri.Uri[:7]+USER+':'+PASS+'@'+stream_uri.Uri[7:]
+#     else:
+#         uri = stream_uri.Uri
+#     print(uri)
+#     cap = cv2.VideoCapture(uri)
+#     print('after cap')
+#     # Read frames from the video stream and display them
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             break
+#         cv2.imshow('Video Stream', frame)
+#         if cv2.waitKey(1) == ord('q'):
+#             break
+
+#     # Release the video capture object and close the window
+#     cap.release()
+#     cv2.destroyAllWindows()
+
+# create_frame(IP, PORT, USER , PASS)
