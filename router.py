@@ -22,32 +22,7 @@ ROOT = os.path.dirname(__file__)
 
 relay = None
 webcam = None
-
-
-def create_local_tracks(play_from, decode):
-    global relay, webcam
-
-    if play_from:
-        player = MediaPlayer(play_from, decode=decode)
-        return player.audio, player.video
-    else:
-        options = {"framerate": "30", "video_size": "640x480"}
-        if relay is None:
-            if platform.system() == "Darwin":
-                webcam = MediaPlayer(
-                    "default:none", format="avfoundation", options=options
-                )
-            elif platform.system() == "Windows":
-                # webcam = MediaPlayer(
-                #     "video=Integrated Camera", format="dshow", options=options
-                # )
-                # os.path.join(ROOT,"abc.mp4")
-                webcam = MediaPlayer("abc.mp4")
-            else:
-                webcam = MediaPlayer("/dev/video0", format="v4l2", options=options)
-            relay = MediaRelay()
-        return None, relay.subscribe(webcam.video)
-    
+   
 # Tạo lớp VideoStreamTrack để lưu trữ khung hình video
 class CameraVideoTrack(VideoStreamTrack):
     """
@@ -93,7 +68,7 @@ def force_codec(pc, sender, forced_codec):
         [codec for codec in codecs if codec.mimeType == forced_codec]
     )
 
-
+# render index.html
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
@@ -118,19 +93,10 @@ async def offer(request):
             await pc.close()
             pcs.discard(pc)
 
-    # open media source
-    # audio, video = create_local_tracks(
-    #     args.play_from, decode=not args.play_without_decoding
-    # )
+    
     video = CameraVideoTrack('rtsp://admin:songnam@123@192.168.1.250/')
     #video = CameraVideoTrack('http://192.168.1.250/')
 
-    # if audio:
-    #     audio_sender = pc.addTrack(audio)
-    #     if args.audio_codec:
-    #         force_codec(pc, audio_sender, args.audio_codec)
-    #     elif args.play_without_decoding:
-    #         raise Exception("You must specify the audio codec using --audio-codec")
 
     if video:
         video_sender = pc.addTrack(video)
@@ -150,46 +116,6 @@ async def offer(request):
             {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
         ),
     )
-
-
-async def answer(request):
-    params = await request.json()
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
-
-    pc = RTCPeerConnection()
-    pcs.add(pc)
-
-    @pc.on("connectionstatechange")
-    async def on_connectionstatechange():
-        print("Connection state is %s" % pc.connectionState)
-        if pc.connectionState == "failed":
-            await pc.close()
-            pcs.discard(pc)
-
-    # async def run(pc):
-    video = VideoStreamTrack()
-
-    if video:
-        video_sender = pc.addTrack(video)
-        if args.video_codec:
-            force_codec(pc, video_sender, args.video_codec)
-        elif args.play_without_decoding:
-            raise Exception("You must specify the video codec using --video-codec")
-
-    await pc.setRemoteDescription(offer)
-
-    answer = await pc.createAnswer()
-    await pc.setLocalDescription(answer)
-
-    return web.Response(
-        content_type="application/json",
-        text=json.dumps(
-            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-        ),
-    )
-    
-    # asyncio.get_event_loop().run_until_complete(run(pc))
-
 
 
 pcs = set()
