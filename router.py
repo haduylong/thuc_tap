@@ -16,13 +16,50 @@ from aiortc.mediastreams import MediaStreamError
 import cv2
 import numpy as np
 from av.video.frame import VideoFrame
+from onvif import ONVIFCamera
 
 ROOT = os.path.dirname(__file__)
 
 
 relay = None
 webcam = None
-   
+
+IP='192.168.0.103'   # Camera IP address
+PORT=8080           # Port
+USER=''         # Username
+PASS=''        # Password
+
+def create_frame(IP, PORT, USER , PASS):
+    camera = ONVIFCamera(IP, PORT, USER , PASS)
+
+    media_service = camera.create_media_service()
+
+    profiles = media_service.GetProfiles()
+
+    profile = profiles[0]
+
+    stream_uri = media_service.GetStreamUri({
+        'StreamSetup':{
+            'Stream':'RTP-Unicast',
+            'Transport': {
+                'Protocol': 'RTSP',
+                'Tunnel': None
+            }
+        },
+        'ProfileToken': profile.token
+    })
+
+    print(stream_uri)
+
+
+    if len(USER)>0 and len(PASS)>0:
+        uri = stream_uri.Uri[:7]+USER+':'+PASS+'@'+stream_uri.Uri[7:]
+    else:
+        uri = stream_uri.Uri
+    
+    return uri
+
+
 # Tạo lớp VideoStreamTrack để lưu trữ khung hình video
 class CameraVideoTrack(VideoStreamTrack):
     """
@@ -94,9 +131,10 @@ async def offer(request):
             pcs.discard(pc)
 
     
-    video = CameraVideoTrack('rtsp://admin:songnam@123@192.168.1.250/')
-    #video = CameraVideoTrack('http://192.168.1.250/')
-
+    # video = CameraVideoTrack('rtsp://admin:songnam@123@192.168.1.250/')
+    # video = CameraVideoTrack('http://192.168.1.250/')
+    # video = CameraVideoTrack(create_frame(IP, PORT, USER , PASS))
+    video = CameraVideoTrack(0)
 
     if video:
         video_sender = pc.addTrack(video)
